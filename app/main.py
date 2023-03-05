@@ -13,11 +13,11 @@ def main():
     # Uncomment this to pass the first stage
 
     server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
-    [client_connection, client_address] = server_socket.accept()  # wait for client
+    [client_connection, _client_address] = server_socket.accept()  # wait for client
 
     while True:
         # No handling of requests longer than 1024
-        query: str = client_connection.recv(1024).decode()
+        query = client_connection.recv(1024).decode()
         if not query:
             break
         print_prefix_lines(query, "client:")
