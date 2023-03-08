@@ -4,7 +4,9 @@ import io
 import socket
 import socketserver
 
-from app.resp import BulkString, ErrorString, RESPArray, RESPValue, SimpleString, parse_resp_value, serialize_resp_value
+from app.resp import BulkString, ErrorString, NilBulkString, RESPArray, RESPValue, SimpleString, parse_resp_value, serialize_resp_value
+
+key_store: dict[str, str] = {}
 
 
 def print_prefix_lines(text: str, prefix: str):
@@ -18,6 +20,14 @@ def execute_command(query: list[str]) -> RESPValue:
             return SimpleString("PONG")
         case ("PING" | "ECHO", [arg]):
             return BulkString(arg)
+        case ("SET", [key, value]):
+            key_store[key] = value
+            return SimpleString("OK")
+        case ("GET", [key]):
+            if key in key_store:
+                return BulkString(key_store[key])
+            else:
+                return NilBulkString()
         case _:
             return ErrorString(f"ERR Unsupported command: {command}")
 
