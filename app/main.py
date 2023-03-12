@@ -26,10 +26,16 @@ def execute_command(query: list[str]) -> RESPValue:
             key_store.set(key, value)
             return SimpleString("OK")
         case ("SET", [key, value, "PX", expiry_ms]):
-            key_store.set(key, value, int(expiry_ms))
+            key_store.set(key, value, expiry_ms=int(expiry_ms))
             return SimpleString("OK")
-        case ("SET", [key, value, "EX", expiry_ms]):
-            key_store.set(key, value, int(expiry_ms) * 1000)
+        case ("SET", [key, value, "EX", expiry_sec]):
+            key_store.set(key, value, expiry_sec=int(expiry_sec))
+            return SimpleString("OK")
+        case ("SET", [key, value, "PXAT", expiry_ms]):
+            key_store.set(key, value, expires_at_ms=int(expiry_ms))
+            return SimpleString("OK")
+        case ("SET", [key, value, "EXAT", expiry_sec]):
+            key_store.set(key, value, expires_at_sec=int(expiry_sec))
             return SimpleString("OK")
         case ("GET", [key]):
             value = key_store.get(key)
