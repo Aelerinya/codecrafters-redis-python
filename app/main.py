@@ -23,19 +23,21 @@ def execute_command(query: list[str]) -> RESPValue:
             return SimpleString("PONG")
         case ("PING" | "ECHO", [arg]):
             return BulkString(arg)
-        case ("SET", [key, value]):
-            key_store.set(key, value)
-            return SimpleString("OK")
-        case ("SET", [key, value, ("EX" | "PX" | "EXAT" | "PXAT") as expiry_type, expiry_value]):
-            match expiry_type:
-                case "EX":
-                    expires_at = int(time() * 1000) + int(expiry_value) * 1000
-                case "PX":
-                    expires_at = int(time() * 1000) + int(expiry_value)
-                case "EXAT":
-                    expires_at = int(expiry_value) * 1000
-                case "PXAT":
-                    expires_at = int(expiry_value)
+        case ("SET", [key, value, *options]):
+            option_name = options[0].upper() if options else None
+            match (option_name, options[1:]):
+                case (None, _):
+                    expires_at = None
+                case ("EX", [seconds]):
+                    expires_at = int(time() * 1000) + int(seconds) * 1000
+                case ("PX", [milliseconds]):
+                    expires_at = int(time() * 1000) + int(milliseconds)
+                case ("EXAT", [timestamp]):
+                    expires_at = int(timestamp) * 1000
+                case ("PXAT", [timestamp]):
+                    expires_at = int(timestamp)
+                case _:
+                    return ErrorString(f"ERR Unsupported option: {option_name}")
             key_store.set(key, value, expires_at=expires_at)
             return SimpleString("OK")
         case ("GET", [key]):
