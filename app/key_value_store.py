@@ -16,17 +16,8 @@ class KeyValueStore:
         self.store = {}
 
     def set(self, key: str, value: str, *,
-            expiry_ms: Optional[int] = None,
-            expiry_sec: Optional[int] = None,
-            expires_at_sec: Optional[int] = None,
-            expires_at_ms: Optional[int] = None) -> None:
-        if expiry_ms is not None:
-            expires_at_ms = int(time() * 1000) + expiry_ms
-        if expiry_sec is not None:
-            expires_at_sec = int(time()) + expiry_sec
-        if expires_at_sec is not None:
-            expires_at_ms = expires_at_sec * 1000
-        self.store[key] = Value(value, expires_at_ms)
+            expires_at: Optional[int] = None) -> None:
+        self.store[key] = Value(value, expires_at)
 
     def get(self, key: str) -> Optional[str]:
         if key not in self.store:

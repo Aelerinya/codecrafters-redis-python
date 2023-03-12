@@ -3,6 +3,7 @@ from io import StringIO
 import io
 import socket
 import socketserver
+from time import time
 
 from app.key_value_store import KeyValueStore
 from app.resp import BulkString, ErrorString, NilBulkString, RESPArray, RESPValue, SimpleString, parse_resp_value, serialize_resp_value
@@ -25,17 +26,17 @@ def execute_command(query: list[str]) -> RESPValue:
         case ("SET", [key, value]):
             key_store.set(key, value)
             return SimpleString("OK")
-        case ("SET", [key, value, "PX", expiry_ms]):
-            key_store.set(key, value, expiry_ms=int(expiry_ms))
-            return SimpleString("OK")
-        case ("SET", [key, value, "EX", expiry_sec]):
-            key_store.set(key, value, expiry_sec=int(expiry_sec))
-            return SimpleString("OK")
-        case ("SET", [key, value, "PXAT", expiry_ms]):
-            key_store.set(key, value, expires_at_ms=int(expiry_ms))
-            return SimpleString("OK")
-        case ("SET", [key, value, "EXAT", expiry_sec]):
-            key_store.set(key, value, expires_at_sec=int(expiry_sec))
+        case ("SET", [key, value, ("EX" | "PX" | "EXAT" | "PXAT") as expiry_type, expiry_value]):
+            match expiry_type:
+                case "EX":
+                    expires_at = int(time() * 1000) + int(expiry_value) * 1000
+                case "PX":
+                    expires_at = int(time() * 1000) + int(expiry_value)
+                case "EXAT":
+                    expires_at = int(expiry_value) * 1000
+                case "PXAT":
+                    expires_at = int(expiry_value)
+            key_store.set(key, value, expires_at=expires_at)
             return SimpleString("OK")
         case ("GET", [key]):
             value = key_store.get(key)
